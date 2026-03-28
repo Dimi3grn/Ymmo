@@ -1,0 +1,22 @@
+# .NET
+backend/bin/
+backend/obj/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Python
+data-service/__pycache__/
+data-service/.venv/
+data-service/*.pyc
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Env
+.env
+*.env.local

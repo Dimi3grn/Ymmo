@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Jost', system-ui, sans-serif;
+  --color-cream: #F5F0E8;
+  --color-gold: #B8962E;
+  --color-gold-light: #D4AF6A;
+  --color-ink: #0D0D0D;
+  --color-ink-50: #1A1A1A;
+  --color-stone: #6B6560;
+  --color-border: #D9D4CC;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Jost', system-ui, sans-serif;
+  color: #0D0D0D;
+  background: #FFFFFF;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Trait soulignement animé */
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #0D0D0D;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.link-underline:hover::after {
+  width: 100%;
+}
+
+.link-underline-gold::after {
+  background: #B8962E;
+}
+
+/* Bouton principal */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0D0D0D;
+  color: #FFFFFF;
+  padding: 0.75rem 2rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 1px solid #0D0D0D;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s;
+}
+.btn-primary:hover {
+  background: #FFFFFF;
+  color: #0D0D0D;
+}
+
+/* Bouton secondaire */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: #0D0D0D;
+  padding: 0.75rem 2rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 1px solid #0D0D0D;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s;
+}
+.btn-secondary:hover {
+  background: #0D0D0D;
+  color: #FFFFFF;
+}
+
+/* Input */
+.input-field {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #D9D4CC;
+  background: transparent;
+  padding: 0.75rem 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: #0D0D0D;
+  outline: none;
+  transition: border-color 0.25s;
+}
+.input-field:focus {
+  border-bottom-color: #0D0D0D;
+}
+.input-field::placeholder {
+  color: #9E9890;
+  font-weight: 300;
+}
+
+select.input-field {
+  appearance: none;
+  cursor: pointer;
+}

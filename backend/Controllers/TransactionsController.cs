@@ -1,0 +1,162 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YmmoAPI.Data;
+using YmmoAPI.DTOs;
+using YmmoAPI.Models;
+
+namespace YmmoAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class TransactionsController : ControllerBase
+{
+    private readonly YmmoDbContext _db;
+
+    public TransactionsController(YmmoDbContext db) => _db = db;
+
+    private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+    private string GetUserRole() => User.FindFirst(ClaimTypes.Role)!.Value;
+
+    [HttpGet]
+    public async Task<ActionResult<List<TransactionDTO>>> GetAll()
+    {
+        var userId = GetUserId();
+        var role = GetUserRole();
+
+        var query = _db.Transactions
+            .Include(t => t.Bien)
+            .Include(t => t.Acheteur)
+            .Include(t => t.Vendeur)
+            .Include(t => t.Agent)
+            .AsQueryable();
+
+        query = role switch
+        {
+            "Client" => query.Where(t => t.AcheteurId == userId || t.VendeurId == userId),
+            "Agent" or "AdminAgence" => query.Where(t => t.AgentId == userId),
+            "AdminSiege" => query,
+            _ => query.Where(t => t.AcheteurId == userId || t.VendeurId == userId)
+        };
+
+        var transactions = await query.OrderByDescending(t => t.DateCreation).ToListAsync();
+        return Ok(transactions.Select(MapToDTO));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
+    public async Task<ActionResult<TransactionDTO>> Create(CreateTransactionDTO dto)
+    {
+        var bien = await _db.Biens.FindAsync(dto.BienId);
+        if (bien is null) return NotFound(new { message = "Bien introuvable." });
+
+        var transaction = new Transaction
+        {
+            BienId = dto.BienId,
+            AcheteurId = dto.AcheteurId,
+            VendeurId = dto.VendeurId,
+            MontantFinal = dto.MontantFinal,
+            AgentId = GetUserId()
+        };
+
+        bien.Statut = StatutBien.SousCompromis;
+
+        _db.Transactions.Add(transaction);
+        await _db.SaveChangesAsync();
+
+        var created = await _db.Transactions
+            .Include(t => t.Bien).Include(t => t.Acheteur).Include(t => t.Vendeur).Include(t => t.Agent)
+            .FirstAsync(t => t.Id == transaction.Id);
+
+        return CreatedAtAction(nameof(GetAll), MapToDTO(created));
+    }
+
+    [HttpPost("offre")]
+    public async Task<IActionResult> SubmitOffer([FromBody] ClientOfferDTO dto)
+    {
+        var userId = GetUserId();
+
+        var rdv = await _db.RendezVous
+            .Include(r => r.Bien)
+            .FirstOrDefaultAsync(r => r.Id == dto.RendezVousId && r.ClientId == userId);
+
+        if (rdv is null)
+            return NotFound(new { message = "Rendez-vous introuvable." });
+        if (rdv.Statut != StatutRendezVous.Effectue)
+            return BadRequest(new { message = "La visite doit être effectuée avant de faire une offre." });
+
+        var existing = await _db.Transactions
+            .AnyAsync(t => t.BienId == rdv.BienId && t.AcheteurId == userId && t.Statut != StatutTransaction.Annulee);
+        if (existing)
+            return BadRequest(new { message = "Vous avez déjà une offre en cours pour ce bien." });
+
+        var agentId = rdv.AgentId;
+
+        var transaction = new Transaction
+        {
+            BienId = rdv.BienId,
+            AcheteurId = userId,
+            VendeurId = agentId,
+            MontantFinal = dto.Montant,
+            AgentId = agentId
+        };
+
+        _db.Transactions.Add(transaction);
+        await _db.SaveChangesAsync();
+
+        var created = await _db.Transactions
+            .Include(t => t.Bien).Include(t => t.Acheteur).Include(t => t.Vendeur).Include(t => t.Agent)
+            .FirstAsync(t => t.Id == transaction.Id);
+
+        return Ok(MapToDTO(created));
+    }
+
+    [HttpPatch("{id}/statut")]
+    [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
+    public async Task<ActionResult<TransactionDTO>> UpdateStatut(int id, [FromBody] UpdateTransactionStatutDTO dto)
+    {
+        var transaction = await _db.Transactions
+            .Include(t => t.Bien).Include(t => t.Acheteur).Include(t => t.Vendeur).Include(t => t.Agent)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (transaction is null) return NotFound();
+        if (!Enum.TryParse<StatutTransaction>(dto.Statut, true, out var statut))
+            return BadRequest(new { message = "Statut invalide." });
+
+        transaction.Statut = statut;
+
+        if (statut == StatutTransaction.Finalisee)
+        {
+            transaction.DateFinalisation = DateTime.UtcNow;
+            transaction.Bien.Statut = StatutBien.Vendu;
+        }
+        else if (statut == StatutTransaction.Annulee)
+        {
+            transaction.Bien.Statut = StatutBien.Disponible;
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(MapToDTO(transaction));
+    }
+
+    private static TransactionDTO MapToDTO(Transaction t) => new()
+    {
+        Id = t.Id,
+        MontantFinal = t.MontantFinal,
+        Statut = t.Statut.ToString(),
+        BienId = t.BienId,
+        BienTitre = t.Bien?.Titre ?? "",
+        BienVille = t.Bien?.Ville ?? "",
+        BienPrix = t.Bien?.Prix ?? 0,
+        AcheteurId = t.AcheteurId,
+        AcheteurNom = t.Acheteur != null ? $"{t.Acheteur.Prenom} {t.Acheteur.Nom}" : "",
+        VendeurId = t.VendeurId,
+        VendeurNom = t.Vendeur != null ? $"{t.Vendeur.Prenom} {t.Vendeur.Nom}" : "",
+        AgentId = t.AgentId,
+        AgentNom = t.Agent != null ? $"{t.Agent.Prenom} {t.Agent.Nom}" : null,
+        DateCreation = t.DateCreation,
+        DateFinalisation = t.DateFinalisation
+    };
+}

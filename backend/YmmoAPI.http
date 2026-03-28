@@ -1,0 +1,6 @@
+@YmmoAPI_HostAddress = http://localhost:5068
+
+GET {{YmmoAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
