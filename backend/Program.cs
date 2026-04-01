@@ -43,12 +43,21 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        var origins = new List<string> { "http://localhost:5173", "http://localhost:5174" };
+        var extraOrigins = builder.Configuration["AllowedOrigins"];
+        if (!string.IsNullOrEmpty(extraOrigins))
+            origins.AddRange(extraOrigins.Split(",", StringSplitOptions.RemoveEmptyEntries));
+
+        policy.WithOrigins([.. origins])
             .AllowAnyHeader()
             .AllowAnyMethod()
             .WithExposedHeaders("X-Total-Count");
     });
 });
+
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+    builder.WebHost.UseUrls($"http://+:{port}");
 
 var app = builder.Build();
 

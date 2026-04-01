@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import stats, predictions, scoring
@@ -8,9 +9,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
+origins = ["http://localhost:5173", "http://localhost:5062"]
+extra = os.getenv("ALLOWED_ORIGINS", "")
+if extra:
+    origins += [o.strip() for o in extra.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5062"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

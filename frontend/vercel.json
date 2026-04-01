@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/stats/:path*",
+      "destination": "REPLACE_WITH_DATA_SERVICE_URL/api/stats/:path*"
+    },
+    {
+      "source": "/api/predictions/:path*",
+      "destination": "REPLACE_WITH_DATA_SERVICE_URL/api/predictions/:path*"
+    },
+    {
+      "source": "/api/scores/:path*",
+      "destination": "REPLACE_WITH_DATA_SERVICE_URL/api/scores/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "REPLACE_WITH_BACKEND_URL/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
