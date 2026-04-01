@@ -43,7 +43,13 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <div className="bg-[#D9D4CC] aspect-square" />
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&h=600&fit=crop"
+                      alt="Bien immobilier"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div className="bg-[#F5F0E8] border border-[#D9D4CC] flex items-end p-5 flex-1">
                     <div>
                       <p className="font-display text-3xl text-[#0D0D0D]">+500</p>
