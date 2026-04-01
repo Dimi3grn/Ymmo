@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls c:/Users/dmgrr/Documents/fil_rouge/*.sql)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}
