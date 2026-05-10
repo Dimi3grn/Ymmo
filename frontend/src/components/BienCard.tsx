@@ -67,10 +67,10 @@ export default function BienCard({ bien, score }: Props) {
       </div>
 
       {/* Infos */}
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-4">
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className="font-display text-xl text-[#0D0D0D] leading-tight truncate">{bien.titre}</p>
+            <p className="font-display text-lg sm:text-xl text-[#0D0D0D] leading-tight line-clamp-2">{bien.titre}</p>
             <p className="font-body text-xs text-[#6B6560] tracking-wide mt-1">
               {bien.ville} · {bien.codePostal}
             </p>
@@ -81,9 +81,9 @@ export default function BienCard({ bien, score }: Props) {
         </div>
 
         {/* Séparateur */}
-        <div className="border-t border-[#D9D4CC] mt-5 pt-5 flex items-center justify-between">
-          <p className="font-display text-2xl text-[#0D0D0D]">{formatPrix(bien.prix)}</p>
-          <div className="flex items-center gap-4 font-body text-xs text-[#6B6560] tracking-wide">
+        <div className="border-t border-[#D9D4CC] mt-4 pt-4 flex flex-wrap items-center justify-between gap-2">
+          <p className="font-display text-xl sm:text-2xl text-[#0D0D0D]">{formatPrix(bien.prix)}</p>
+          <div className="flex items-center gap-3 font-body text-xs text-[#6B6560] tracking-wide">
             <span>{bien.surface} m²</span>
             <span className="text-[#D9D4CC]">·</span>
             <span>{bien.nbPieces} p.</span>

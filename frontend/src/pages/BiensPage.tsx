@@ -69,7 +69,7 @@ export default function BiensPage() {
   return (
     <div className="min-h-screen">
       {/* En-tête */}
-      <div className="bg-[#F5F0E8] border-b border-[#D9D4CC] px-6 lg:px-12 py-12 lg:py-16">
+      <div className="bg-[#F5F0E8] border-b border-[#D9D4CC] px-4 sm:px-6 lg:px-12 py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto">
           <p className="font-body text-xs tracking-[0.2em] uppercase text-[#B8962E] mb-3">
             Notre sélection
@@ -85,8 +85,8 @@ export default function BiensPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-10 lg:py-16">
-        <div className="flex gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-10 lg:py-16">
+        <div className="flex gap-8 lg:gap-12">
 
           {/* Filtres latéraux desktop */}
           <aside className="hidden lg:block w-56 shrink-0">
@@ -246,7 +246,7 @@ export default function BiensPage() {
                 <p className="font-body text-sm text-[#6B6560]">Modifiez vos critères de recherche.</p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {biens.map((bien) => (
                   <BienCard key={bien.id} bien={bien} score={scores[bien.id]} />
                 ))}

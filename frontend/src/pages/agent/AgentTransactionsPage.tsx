@@ -33,7 +33,7 @@ export default function AgentTransactionsPage() {
   return (
     <div>
       <p className="font-body text-xs tracking-[0.2em] uppercase text-[#B8962E] mb-2">Gestion</p>
-      <h1 className="font-display text-3xl text-[#0D0D0D] mb-8">Transactions</h1>
+      <h1 className="font-display text-2xl sm:text-3xl text-[#0D0D0D] mb-6 sm:mb-8">Transactions</h1>
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -44,7 +44,7 @@ export default function AgentTransactionsPage() {
       ) : (
         <div className="space-y-4">
           {transactions.map((tx) => (
-            <div key={tx.id} className="border border-[#D9D4CC] p-6">
+            <div key={tx.id} className="border border-[#D9D4CC] p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
                   <p className="font-display text-xl text-[#0D0D0D]">{tx.bienTitre}</p>

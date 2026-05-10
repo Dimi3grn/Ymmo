@@ -60,7 +60,7 @@ export default function AgentLayout() {
       </div>
 
       {/* Contenu */}
-      <main className="flex-1 px-6 lg:px-12 py-10 pb-24 lg:pb-10">
+      <main className="flex-1 px-4 sm:px-6 lg:px-12 py-6 sm:py-10 pb-24 lg:pb-10">
         <Outlet />
       </main>
     </div>

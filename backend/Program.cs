@@ -70,6 +70,13 @@ if (!string.IsNullOrEmpty(port))
 
 var app = builder.Build();
 
+// Auto-migration au démarrage (utile en Docker / CI)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<YmmoDbContext>();
+    db.Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

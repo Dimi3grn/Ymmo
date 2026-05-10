@@ -22,14 +22,21 @@ export default function AgentBiensPage() {
     api.get("/biens?taille=100").then((r) => setBiens(r.data)).catch(console.error).finally(() => setLoading(false));
   }, []);
 
+  const statutClass = (s: string) =>
+    s === "Disponible"
+      ? "border-green-300 text-green-700 bg-green-50"
+      : s === "Vendu"
+      ? "border-[#D9D4CC] text-[#6B6560] bg-[#F5F0E8]"
+      : "border-amber-300 text-amber-700 bg-amber-50";
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <p className="font-body text-xs tracking-[0.2em] uppercase text-[#B8962E] mb-2">Gestion</p>
-          <h1 className="font-display text-3xl text-[#0D0D0D]">Biens immobiliers</h1>
+          <h1 className="font-display text-2xl sm:text-3xl text-[#0D0D0D]">Biens immobiliers</h1>
         </div>
-        <Link to="/agent/biens/nouveau" className="btn-primary text-xs">
+        <Link to="/agent/biens/nouveau" className="btn-primary text-xs shrink-0">
           <Plus className="h-3.5 w-3.5" /> Ajouter
         </Link>
       </div>
@@ -38,38 +45,64 @@ export default function AgentBiensPage() {
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border border-[#0D0D0D] border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : biens.length === 0 ? (
+        <p className="font-body text-sm text-[#6B6560] py-16 text-center">Aucun bien pour le moment.</p>
       ) : (
-        <div className="border border-[#D9D4CC] overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#F5F0E8] border-b border-[#D9D4CC]">
-                {["Bien", "Ville", "Type", "Prix", "Statut", ""].map((h) => (
-                  <th key={h} className="text-left px-6 py-4 font-body text-[10px] tracking-[0.15em] uppercase text-[#6B6560] font-normal">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {biens.map((b) => (
-                <tr key={b.id} className="border-b border-[#D9D4CC] last:border-b-0">
-                  <td className="px-6 py-4 font-body text-sm text-[#0D0D0D]">{b.titre}</td>
-                  <td className="px-6 py-4 font-body text-sm text-[#6B6560]">{b.ville}</td>
-                  <td className="px-6 py-4 font-body text-sm text-[#6B6560]">{b.type}</td>
-                  <td className="px-6 py-4 font-body text-sm font-500 text-[#0D0D0D]">{formatPrix(b.prix)}</td>
-                  <td className="px-6 py-4">
-                    <span className={`font-body text-[10px] tracking-widest uppercase px-3 py-1 border ${b.statut === "Disponible" ? "border-green-300 text-green-700 bg-green-50" : b.statut === "Vendu" ? "border-[#D9D4CC] text-[#6B6560] bg-[#F5F0E8]" : "border-amber-300 text-amber-700 bg-amber-50"}`}>
-                      {STATUT_LABELS[b.statut] ?? b.statut}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Link to={`/agent/biens/${b.id}/modifier`} className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors">
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                  </td>
+        <>
+          {/* Vue cards — mobile */}
+          <div className="md:hidden flex flex-col gap-4">
+            {biens.map((b) => (
+              <div key={b.id} className="border border-[#D9D4CC] p-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <p className="font-body text-sm text-[#0D0D0D] line-clamp-2 flex-1">{b.titre}</p>
+                  <Link to={`/agent/biens/${b.id}/modifier`} className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors shrink-0">
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                </div>
+                <p className="font-body text-xs text-[#6B6560] mb-3">{b.ville} · {b.type}</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-display text-lg text-[#0D0D0D]">{formatPrix(b.prix)}</p>
+                  <span className={`font-body text-[10px] tracking-widest uppercase px-2.5 py-1 border ${statutClass(b.statut)}`}>
+                    {STATUT_LABELS[b.statut] ?? b.statut}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Vue table — desktop */}
+          <div className="hidden md:block border border-[#D9D4CC] overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#F5F0E8] border-b border-[#D9D4CC]">
+                  {["Bien", "Ville", "Type", "Prix", "Statut", ""].map((h) => (
+                    <th key={h} className="text-left px-6 py-4 font-body text-[10px] tracking-[0.15em] uppercase text-[#6B6560] font-normal">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {biens.map((b) => (
+                  <tr key={b.id} className="border-b border-[#D9D4CC] last:border-b-0">
+                    <td className="px-6 py-4 font-body text-sm text-[#0D0D0D] max-w-[200px] truncate">{b.titre}</td>
+                    <td className="px-6 py-4 font-body text-sm text-[#6B6560]">{b.ville}</td>
+                    <td className="px-6 py-4 font-body text-sm text-[#6B6560]">{b.type}</td>
+                    <td className="px-6 py-4 font-body text-sm font-500 text-[#0D0D0D] whitespace-nowrap">{formatPrix(b.prix)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`font-body text-[10px] tracking-widest uppercase px-3 py-1 border ${statutClass(b.statut)}`}>
+                        {STATUT_LABELS[b.statut] ?? b.statut}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Link to={`/agent/biens/${b.id}/modifier`} className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors">
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
