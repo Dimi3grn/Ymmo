@@ -1,0 +1,4 @@
+# Test/dev dependencies (not needed at runtime).
+-r requirements.txt
+pytest
+httpx
