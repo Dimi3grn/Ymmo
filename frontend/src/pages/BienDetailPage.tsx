@@ -22,15 +22,19 @@ interface ScoreDetailEntry {
 interface BienScore {
   score_total?: number;
   detail?: {
-    qualite_prix?: number | ScoreDetailEntry;
-    demande_zone?: number | ScoreDetailEntry;
-    prediction?: number | ScoreDetailEntry;
+    qualite_prix?: number | ScoreDetailEntry | null;
+    demande_zone?: number | ScoreDetailEntry | null;
+    prediction?: number | ScoreDetailEntry | null;
   };
 }
 
-/** Le data-service renvoie soit un nombre, soit un objet { score }. */
-const detailScore = (v: number | ScoreDetailEntry | undefined): number =>
-  typeof v === "object" ? v.score ?? 0 : v ?? 0;
+/**
+ * Le data-service renvoie soit un nombre, soit un objet { score }, soit null.
+ * Le garde `v &&` est indispensable : `typeof null === "object"`, donc sans lui
+ * un détail à null planterait la page (accès `null.score`).
+ */
+const detailScore = (v: number | ScoreDetailEntry | null | undefined): number =>
+  v && typeof v === "object" ? v.score ?? 0 : v ?? 0;
 
 export default function BienDetailPage() {
   const { id } = useParams<{ id: string }>();

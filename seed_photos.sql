@@ -1,7 +1,11 @@
 -- Photos des biens : chemins LOCAUX servis par le frontend (vite/nginx) depuis
 -- frontend/public/images/biens/. Les anciennes URLs Unsplash externes expiraient
 -- (erreurs 404) ; ces fichiers sont versionnés dans le dépôt et toujours disponibles.
--- À rejouer après le seed initial pour appliquer les chemins locaux.
+--
+-- Le DELETE rend le script idempotent : on peut le rejouer après le seed initial
+-- pour remplacer les anciennes URLs Unsplash sans dupliquer les lignes (sinon les
+-- INSERT créeraient des doublons, dont plusieurs EstPrincipale = true par bien).
+DELETE FROM "PhotosBien";
 INSERT INTO "PhotosBien" ("Url", "EstPrincipale", "BienId") VALUES
 -- Bien 1 : Appartement lumineux Aix
 ('/images/biens/appartement-1.jpg', true, 1),
