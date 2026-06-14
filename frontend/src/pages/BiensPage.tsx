@@ -12,7 +12,7 @@ export default function BiensPage() {
   const [biens, setBiens] = useState<Bien[]>([]);
   const [scores, setScores] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [error, setError] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [ville, setVille] = useState("");
@@ -24,20 +24,22 @@ export default function BiensPage() {
 
   const fetchBiens = async () => {
     setLoading(true);
+    setError(false);
     try {
       const params: Record<string, string> = {};
       if (ville) params.ville = ville;
       if (type) params.type = type;
-      if (statut) params.statut = statut;
+      if (statut && statut !== "tous") params.statut = statut;
       if (prixMin) params.prixMin = prixMin;
       if (prixMax) params.prixMax = prixMax;
       if (nbPiecesMin) params.nbPiecesMin = nbPiecesMin;
 
       const res = await api.get("/biens", { params });
       setBiens(res.data);
-      setTotal(parseInt(res.headers["x-total-count"] ?? res.data.length, 10));
     } catch (err) {
       console.error(err);
+      setBiens([]);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -52,6 +54,8 @@ export default function BiensPage() {
         setScores(map);
       })
       .catch(() => {});
+    // Chargement initial uniquement ; les filtres se rejouent via le formulaire.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -239,6 +243,16 @@ export default function BiensPage() {
             {loading ? (
               <div className="flex items-center justify-center py-32">
                 <div className="w-6 h-6 border border-[#0D0D0D] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : error ? (
+              <div className="py-32 text-center">
+                <p className="font-display text-3xl text-[#0D0D0D] mb-3">Service indisponible</p>
+                <p className="font-body text-sm text-[#6B6560] mb-6">
+                  Impossible de charger les biens pour le moment.
+                </p>
+                <button onClick={() => fetchBiens()} className="btn-primary text-xs">
+                  Réessayer
+                </button>
               </div>
             ) : biens.length === 0 ? (
               <div className="py-32 text-center">

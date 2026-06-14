@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api/client";
+import { getApiErrorMessage } from "../../api/error";
 import type { Transaction } from "../../api/types";
 
 const formatPrix = (p: number) =>
@@ -26,8 +27,12 @@ export default function AgentTransactionsPage() {
   useEffect(fetchTx, []);
 
   const updateStatut = async (id: number, statut: string) => {
-    await api.patch(`/transactions/${id}/statut`, { statut });
-    fetchTx();
+    try {
+      await api.patch(`/transactions/${id}/statut`, { statut });
+      fetchTx();
+    } catch (err) {
+      alert(getApiErrorMessage(err, "Impossible de mettre à jour la transaction."));
+    }
   };
 
   return (
