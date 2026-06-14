@@ -79,7 +79,7 @@ public class RendezVousController : ApiControllerBase
 
     [HttpPatch("{id}/statut")]
     [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
-    public async Task<ActionResult<RendezVousDTO>> UpdateStatut(int id, [FromBody] UpdateTransactionStatutDTO dto)
+    public async Task<ActionResult<RendezVousDTO>> UpdateStatut(int id, [FromBody] UpdateStatutDTO dto)
     {
         var rdv = await _db.RendezVous
             .Include(r => r.Bien).Include(r => r.Client).Include(r => r.Agent)

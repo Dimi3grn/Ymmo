@@ -121,7 +121,7 @@ public class TransactionsController : ApiControllerBase
 
     [HttpPatch("{id}/statut")]
     [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
-    public async Task<ActionResult<TransactionDTO>> UpdateStatut(int id, [FromBody] UpdateTransactionStatutDTO dto)
+    public async Task<ActionResult<TransactionDTO>> UpdateStatut(int id, [FromBody] UpdateStatutDTO dto)
     {
         var transaction = await _db.Transactions
             .Include(t => t.Bien).Include(t => t.Acheteur).Include(t => t.Vendeur).Include(t => t.Agent)
