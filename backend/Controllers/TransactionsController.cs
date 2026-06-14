@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,20 +10,17 @@ namespace YmmoAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class TransactionsController : ControllerBase
+public class TransactionsController : ApiControllerBase
 {
     private readonly YmmoDbContext _db;
 
     public TransactionsController(YmmoDbContext db) => _db = db;
 
-    private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-    private string GetUserRole() => User.FindFirst(ClaimTypes.Role)!.Value;
-
     [HttpGet]
     public async Task<ActionResult<List<TransactionDTO>>> GetAll()
     {
-        var userId = GetUserId();
-        var role = GetUserRole();
+        var userId = CurrentUserId;
+        var role = CurrentUserRole;
 
         var query = _db.Transactions
             .Include(t => t.Bien)
@@ -58,7 +54,7 @@ public class TransactionsController : ControllerBase
             AcheteurId = dto.AcheteurId,
             VendeurId = dto.VendeurId,
             MontantFinal = dto.MontantFinal,
-            AgentId = GetUserId()
+            AgentId = CurrentUserId
         };
 
         bien.Statut = StatutBien.SousCompromis;
@@ -76,7 +72,7 @@ public class TransactionsController : ControllerBase
     [HttpPost("offre")]
     public async Task<IActionResult> SubmitOffer([FromBody] ClientOfferDTO dto)
     {
-        var userId = GetUserId();
+        var userId = CurrentUserId;
 
         var rdv = await _db.RendezVous
             .Include(r => r.Bien)

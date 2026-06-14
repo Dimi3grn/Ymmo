@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +10,7 @@ namespace YmmoAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UtilisateursController : ControllerBase
+public class UtilisateursController : ApiControllerBase
 {
     private readonly YmmoDbContext _db;
 
@@ -20,8 +19,7 @@ public class UtilisateursController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UtilisateurDTO>> GetMe()
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var user = await _db.Utilisateurs.Include(u => u.Agence).FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _db.Utilisateurs.Include(u => u.Agence).FirstOrDefaultAsync(u => u.Id == CurrentUserId);
         if (user is null) return NotFound();
         return Ok(MapToDTO(user));
     }

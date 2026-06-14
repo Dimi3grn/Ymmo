@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,20 +10,17 @@ namespace YmmoAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class RendezVousController : ControllerBase
+public class RendezVousController : ApiControllerBase
 {
     private readonly YmmoDbContext _db;
 
     public RendezVousController(YmmoDbContext db) => _db = db;
 
-    private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-    private string GetUserRole() => User.FindFirst(ClaimTypes.Role)!.Value;
-
     [HttpGet]
     public async Task<ActionResult<List<RendezVousDTO>>> GetMine()
     {
-        var userId = GetUserId();
-        var role = GetUserRole();
+        var userId = CurrentUserId;
+        var role = CurrentUserRole;
 
         var query = _db.RendezVous
             .Include(r => r.Bien)
@@ -64,7 +60,7 @@ public class RendezVousController : ControllerBase
             DateHeure = dto.DateHeure,
             Notes = dto.Notes,
             BienId = dto.BienId,
-            ClientId = GetUserId(),
+            ClientId = CurrentUserId,
             AgentId = agentId.Value
         };
 
