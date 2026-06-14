@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import SafeImage from "../components/SafeImage";
 
 export default function HomePage() {
   return (
@@ -43,10 +44,11 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&h=600&fit=crop"
-                      alt="Bien immobilier"
+                  <div className="aspect-square overflow-hidden bg-[#F5F0E8]">
+                    <SafeImage
+                      src="/images/biens/villa-2.jpg"
+                      alt="Bien immobilier d'exception du portefeuille Ymmo"
+                      loading="eager"
                       className="w-full h-full object-cover"
                     />
                   </div>

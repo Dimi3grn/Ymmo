@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import type { Bien } from "../api/types";
+import SafeImage from "./SafeImage";
 
 interface Props {
   bien: Bien;
@@ -33,9 +34,9 @@ export default function BienCard({ bien, score }: Props) {
       {/* Image */}
       <div className={`aspect-[4/3] bg-[#F5F0E8] overflow-hidden relative ${bien.statut === "Vendu" ? "after:absolute after:inset-0 after:bg-black/20" : ""}`}>
         {photoPrincipale ? (
-          <img
+          <SafeImage
             src={photoPrincipale.url}
-            alt={bien.titre}
+            alt={`${bien.titre} — ${bien.ville}`}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (

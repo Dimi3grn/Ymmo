@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Photo indisponible">
+  <rect width="800" height="600" fill="#F5F0E8"/>
+  <rect x="0.5" y="0.5" width="799" height="599" fill="none" stroke="#D9D4CC" stroke-width="1"/>
+  <g fill="none" stroke="#D4AF6A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M320 300 L400 232 L480 300"/>
+    <path d="M340 290 L340 372 L460 372 L460 290"/>
+    <path d="M382 372 L382 330 L418 330 L418 372"/>
+  </g>
+  <text x="400" y="438" text-anchor="middle" font-family="Georgia, 'Cormorant Garamond', serif" font-size="56" fill="#0D0D0D" letter-spacing="6">YMMO</text>
+  <text x="400" y="478" text-anchor="middle" font-family="'Jost', system-ui, sans-serif" font-size="20" fill="#6B6560" letter-spacing="3">PHOTO INDISPONIBLE</text>
+</svg>

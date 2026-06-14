@@ -3,7 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Calendar, Zap, Check } from "lucide-react";
 import api from "../api/client";
 import type { Bien } from "../api/types";
+import { getApiErrorMessage } from "../api/error";
 import { useAuth } from "../context/AuthContext";
+import SafeImage from "../components/SafeImage";
 
 const FEATURES: { key: keyof Bien; label: string }[] = [
   { key: "ascenseur", label: "Ascenseur" },
@@ -13,13 +15,30 @@ const FEATURES: { key: keyof Bien; label: string }[] = [
   { key: "piscine", label: "Piscine" },
 ];
 
+interface ScoreDetailEntry {
+  score?: number;
+  interpretation?: string;
+}
+interface BienScore {
+  score_total?: number;
+  detail?: {
+    qualite_prix?: number | ScoreDetailEntry;
+    demande_zone?: number | ScoreDetailEntry;
+    prediction?: number | ScoreDetailEntry;
+  };
+}
+
+/** Le data-service renvoie soit un nombre, soit un objet { score }. */
+const detailScore = (v: number | ScoreDetailEntry | undefined): number =>
+  typeof v === "object" ? v.score ?? 0 : v ?? 0;
+
 export default function BienDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
   const [bien, setBien] = useState<Bien | null>(null);
   const [loading, setLoading] = useState(true);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [score, setScore] = useState<any>(null);
+  const [score, setScore] = useState<BienScore | null>(null);
   const [rdvDate, setRdvDate] = useState("");
   const [rdvNotes, setRdvNotes] = useState("");
   const [rdvSent, setRdvSent] = useState(false);
@@ -33,8 +52,8 @@ export default function BienDetailPage() {
       await api.post("/rendezvous", { bienId: parseInt(id!), dateHeure: new Date(rdvDate).toISOString(), notes: rdvNotes || undefined });
       setRdvSent(true);
       setShowRdvForm(false);
-    } catch (err: any) {
-      setRdvError(err.response?.data?.message ?? "Erreur lors de l'envoi.");
+    } catch (err) {
+      setRdvError(getApiErrorMessage(err, "Erreur lors de l'envoi."));
     }
   };
 
@@ -69,9 +88,10 @@ export default function BienDetailPage() {
   }
 
   const photos = bien.photos;
-  const photoPrincipale = photos.find((p) => p.estPrincipale) ?? photos[0];
-  const photosRestantes = photos.filter((p) => p !== photoPrincipale);
   const activePhoto = photos[photoIndex];
+  const prediction = score?.detail?.prediction;
+  const interpretation =
+    prediction && typeof prediction === "object" ? prediction.interpretation : undefined;
 
   return (
     <div className="min-h-screen">
@@ -96,9 +116,10 @@ export default function BienDetailPage() {
             {/* Photo principale */}
             <div className="aspect-[4/3] bg-[#F5F0E8] overflow-hidden mb-3">
               {activePhoto ? (
-                <img
+                <SafeImage
                   src={activePhoto.url}
-                  alt={bien.titre}
+                  alt={`${bien.titre} — ${bien.ville}`}
+                  loading="eager"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -114,10 +135,13 @@ export default function BienDetailPage() {
                 {photos.map((photo, i) => (
                   <button
                     key={photo.id}
+                    type="button"
                     onClick={() => setPhotoIndex(i)}
-                    className={`w-20 h-16 shrink-0 overflow-hidden border-2 transition-colors ${i === photoIndex ? "border-[#0D0D0D]" : "border-transparent"}`}
+                    aria-label={`Voir la photo ${i + 1} sur ${photos.length}`}
+                    aria-current={i === photoIndex}
+                    className={`w-20 h-16 shrink-0 overflow-hidden border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8962E] ${i === photoIndex ? "border-[#0D0D0D]" : "border-transparent"}`}
                   >
-                    <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                    <SafeImage src={photo.url} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -273,9 +297,9 @@ export default function BienDetailPage() {
                   </div>
                   <div className="space-y-3">
                     {[
-                      { label: "Qualité / Prix", value: score.detail?.qualite_prix?.score ?? score.detail?.qualite_prix },
-                      { label: "Demande zone", value: score.detail?.demande_zone?.score ?? score.detail?.demande_zone },
-                      { label: "Prédiction", value: score.detail?.prediction?.score ?? score.detail?.prediction },
+                      { label: "Qualité / Prix", value: detailScore(score.detail?.qualite_prix) },
+                      { label: "Demande zone", value: detailScore(score.detail?.demande_zone) },
+                      { label: "Prédiction", value: detailScore(score.detail?.prediction) },
                     ].map((s) => (
                       <div key={s.label}>
                         <div className="flex items-center justify-between mb-1">
@@ -288,8 +312,8 @@ export default function BienDetailPage() {
                       </div>
                     ))}
                   </div>
-                  {score.detail?.prediction?.interpretation && (
-                    <p className="font-body text-xs text-[#6B6560] mt-4 italic">{score.detail.prediction.interpretation}</p>
+                  {interpretation && (
+                    <p className="font-body text-xs text-[#6B6560] mt-4 italic">{interpretation}</p>
                   )}
                 </div>
               )}
