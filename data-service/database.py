@@ -7,7 +7,9 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/ymmo")
 
-engine = create_engine(DATABASE_URL)
+# pool_pre_ping recycles dead connections (e.g. after the DB restarts) instead
+# of surfacing a stale-connection error on the next request.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
