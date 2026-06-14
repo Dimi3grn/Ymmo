@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,20 +10,18 @@ namespace YmmoAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class TransactionsController : ControllerBase
+public class TransactionsController : ApiControllerBase
 {
     private readonly YmmoDbContext _db;
 
     public TransactionsController(YmmoDbContext db) => _db = db;
 
-    private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-    private string GetUserRole() => User.FindFirst(ClaimTypes.Role)!.Value;
-
     [HttpGet]
     public async Task<ActionResult<List<TransactionDTO>>> GetAll()
     {
-        var userId = GetUserId();
-        var role = GetUserRole();
+        var userId = CurrentUserId;
+        var role = CurrentUserRole;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
 
         var query = _db.Transactions
             .Include(t => t.Bien)
@@ -35,8 +32,10 @@ public class TransactionsController : ControllerBase
 
         query = role switch
         {
-            "Client" => query.Where(t => t.AcheteurId == userId || t.VendeurId == userId),
-            "Agent" or "AdminAgence" => query.Where(t => t.AgentId == userId),
+            // Un agent ne voit que ses transactions ; un admin d'agence voit
+            // toutes les transactions des biens de son agence ; le siège voit tout.
+            "Agent" => query.Where(t => t.AgentId == userId),
+            "AdminAgence" => query.Where(t => t.Bien.AgenceId == agenceId),
             "AdminSiege" => query,
             _ => query.Where(t => t.AcheteurId == userId || t.VendeurId == userId)
         };
@@ -52,13 +51,20 @@ public class TransactionsController : ControllerBase
         var bien = await _db.Biens.FindAsync(dto.BienId);
         if (bien is null) return NotFound(new { message = "Bien introuvable." });
 
+        // Vérifie les parties avant insertion pour éviter une violation de clé
+        // étrangère (qui se traduirait sinon par une 500 non gérée).
+        if (!await _db.Utilisateurs.AnyAsync(u => u.Id == dto.AcheteurId))
+            return BadRequest(new { message = "Acheteur introuvable." });
+        if (!await _db.Utilisateurs.AnyAsync(u => u.Id == dto.VendeurId))
+            return BadRequest(new { message = "Vendeur introuvable." });
+
         var transaction = new Transaction
         {
             BienId = dto.BienId,
             AcheteurId = dto.AcheteurId,
             VendeurId = dto.VendeurId,
             MontantFinal = dto.MontantFinal,
-            AgentId = GetUserId()
+            AgentId = CurrentUserId
         };
 
         bien.Statut = StatutBien.SousCompromis;
@@ -76,7 +82,7 @@ public class TransactionsController : ControllerBase
     [HttpPost("offre")]
     public async Task<IActionResult> SubmitOffer([FromBody] ClientOfferDTO dto)
     {
-        var userId = GetUserId();
+        var userId = CurrentUserId;
 
         var rdv = await _db.RendezVous
             .Include(r => r.Bien)
@@ -115,13 +121,26 @@ public class TransactionsController : ControllerBase
 
     [HttpPatch("{id}/statut")]
     [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
-    public async Task<ActionResult<TransactionDTO>> UpdateStatut(int id, [FromBody] UpdateTransactionStatutDTO dto)
+    public async Task<ActionResult<TransactionDTO>> UpdateStatut(int id, [FromBody] UpdateStatutDTO dto)
     {
         var transaction = await _db.Transactions
             .Include(t => t.Bien).Include(t => t.Acheteur).Include(t => t.Vendeur).Include(t => t.Agent)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (transaction is null) return NotFound();
+
+        // Un agent ne gère que ses transactions, un admin d'agence celles de son agence.
+        var role = CurrentUserRole;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
+        var autorise = role switch
+        {
+            "AdminSiege" => true,
+            "AdminAgence" => transaction.Bien.AgenceId == agenceId,
+            "Agent" => transaction.AgentId == CurrentUserId,
+            _ => false
+        };
+        if (!autorise) return Forbid();
+
         if (!Enum.TryParse<StatutTransaction>(dto.Statut, true, out var statut))
             return BadRequest(new { message = "Statut invalide." });
 

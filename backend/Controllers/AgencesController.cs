@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YmmoAPI.Interfaces;
 
@@ -33,6 +34,8 @@ public class AgencesController : ControllerBase
         }));
     }
 
+    // Le détail expose les coordonnées des agents : réservé au personnel interne.
+    [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

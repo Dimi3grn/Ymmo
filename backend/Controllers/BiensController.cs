@@ -12,7 +12,7 @@ namespace YmmoAPI.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class BiensController : ControllerBase
+public class BiensController : ApiControllerBase
 {
     private readonly IBienRepository _biens;
 
@@ -87,7 +87,11 @@ public class BiensController : ControllerBase
             Balcon = dto.Balcon,
             Jardin = dto.Jardin,
             Piscine = dto.Piscine,
-            AgenceId = dto.AgenceId
+            AgenceId = dto.AgenceId,
+            // L'agent qui publie le bien en devient l'agent référent (utilisé
+            // notamment pour router les demandes de visite). Les admins créent
+            // pour le compte de l'agence : l'agent reste à affecter.
+            AgentId = CurrentUserRole == nameof(RoleUtilisateur.Agent) ? CurrentUserId : null
         };
 
         await _biens.AddAsync(bien);

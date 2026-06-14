@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,20 +10,18 @@ namespace YmmoAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class RendezVousController : ControllerBase
+public class RendezVousController : ApiControllerBase
 {
     private readonly YmmoDbContext _db;
 
     public RendezVousController(YmmoDbContext db) => _db = db;
 
-    private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-    private string GetUserRole() => User.FindFirst(ClaimTypes.Role)!.Value;
-
     [HttpGet]
     public async Task<ActionResult<List<RendezVousDTO>>> GetMine()
     {
-        var userId = GetUserId();
-        var role = GetUserRole();
+        var userId = CurrentUserId;
+        var role = CurrentUserRole;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
 
         var query = _db.RendezVous
             .Include(r => r.Bien)
@@ -34,8 +31,10 @@ public class RendezVousController : ControllerBase
 
         query = role switch
         {
-            "Client" => query.Where(r => r.ClientId == userId),
-            "Agent" or "AdminAgence" => query.Where(r => r.AgentId == userId),
+            // Un agent ne voit que ses propres visites ; un admin d'agence voit
+            // toutes les visites des biens de son agence ; le siège voit tout.
+            "Agent" => query.Where(r => r.AgentId == userId),
+            "AdminAgence" => query.Where(r => r.Bien.AgenceId == agenceId),
             "AdminSiege" => query,
             _ => query.Where(r => r.ClientId == userId)
         };
@@ -64,7 +63,7 @@ public class RendezVousController : ControllerBase
             DateHeure = dto.DateHeure,
             Notes = dto.Notes,
             BienId = dto.BienId,
-            ClientId = GetUserId(),
+            ClientId = CurrentUserId,
             AgentId = agentId.Value
         };
 
@@ -80,13 +79,26 @@ public class RendezVousController : ControllerBase
 
     [HttpPatch("{id}/statut")]
     [Authorize(Roles = "Agent,AdminAgence,AdminSiege")]
-    public async Task<ActionResult<RendezVousDTO>> UpdateStatut(int id, [FromBody] UpdateTransactionStatutDTO dto)
+    public async Task<ActionResult<RendezVousDTO>> UpdateStatut(int id, [FromBody] UpdateStatutDTO dto)
     {
         var rdv = await _db.RendezVous
             .Include(r => r.Bien).Include(r => r.Client).Include(r => r.Agent)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (rdv is null) return NotFound();
+
+        // Un agent ne gère que ses visites, un admin d'agence celles de son agence.
+        var role = CurrentUserRole;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
+        var autorise = role switch
+        {
+            "AdminSiege" => true,
+            "AdminAgence" => rdv.Bien.AgenceId == agenceId,
+            "Agent" => rdv.AgentId == CurrentUserId,
+            _ => false
+        };
+        if (!autorise) return Forbid();
+
         if (!Enum.TryParse<StatutRendezVous>(dto.Statut, true, out var statut))
             return BadRequest(new { message = "Statut invalide." });
 

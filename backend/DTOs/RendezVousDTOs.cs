@@ -65,7 +65,8 @@ public class CreateTransactionDTO
     public decimal MontantFinal { get; set; }
 }
 
-public class UpdateTransactionStatutDTO
+/// <summary>Corps commun aux changements de statut (rendez-vous et transactions).</summary>
+public class UpdateStatutDTO
 {
     [Required]
     public string Statut { get; set; } = string.Empty;

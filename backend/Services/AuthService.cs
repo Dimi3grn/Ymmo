@@ -22,14 +22,18 @@ public class AuthService : IAuthService
 
     public string GenererToken(Utilisateur utilisateur)
     {
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, utilisateur.Id.ToString()),
-            new Claim(ClaimTypes.Email, utilisateur.Email),
-            new Claim(ClaimTypes.Role, utilisateur.Role.ToString()),
-            new Claim("nom", utilisateur.Nom),
-            new Claim("prenom", utilisateur.Prenom),
+            new(ClaimTypes.NameIdentifier, utilisateur.Id.ToString()),
+            new(ClaimTypes.Email, utilisateur.Email),
+            new(ClaimTypes.Role, utilisateur.Role.ToString()),
+            new("nom", utilisateur.Nom),
+            new("prenom", utilisateur.Prenom),
         };
+
+        // Permet aux controllers de connaître l'agence de l'utilisateur sans requête DB
+        if (utilisateur.AgenceId.HasValue)
+            claims.Add(new Claim("agenceId", utilisateur.AgenceId.Value.ToString()));
 
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
