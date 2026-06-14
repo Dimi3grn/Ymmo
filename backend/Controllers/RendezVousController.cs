@@ -21,6 +21,7 @@ public class RendezVousController : ApiControllerBase
     {
         var userId = CurrentUserId;
         var role = CurrentUserRole;
+        var agenceId = CurrentUserAgenceId;
 
         var query = _db.RendezVous
             .Include(r => r.Bien)
@@ -30,8 +31,10 @@ public class RendezVousController : ApiControllerBase
 
         query = role switch
         {
-            "Client" => query.Where(r => r.ClientId == userId),
-            "Agent" or "AdminAgence" => query.Where(r => r.AgentId == userId),
+            // Un agent ne voit que ses propres visites ; un admin d'agence voit
+            // toutes les visites des biens de son agence ; le siège voit tout.
+            "Agent" => query.Where(r => r.AgentId == userId),
+            "AdminAgence" => query.Where(r => r.Bien.AgenceId == agenceId),
             "AdminSiege" => query,
             _ => query.Where(r => r.ClientId == userId)
         };
@@ -83,6 +86,17 @@ public class RendezVousController : ApiControllerBase
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (rdv is null) return NotFound();
+
+        // Un agent ne gère que ses visites, un admin d'agence celles de son agence.
+        var autorise = CurrentUserRole switch
+        {
+            "AdminSiege" => true,
+            "AdminAgence" => rdv.Bien.AgenceId == CurrentUserAgenceId,
+            "Agent" => rdv.AgentId == CurrentUserId,
+            _ => false
+        };
+        if (!autorise) return Forbid();
+
         if (!Enum.TryParse<StatutRendezVous>(dto.Statut, true, out var statut))
             return BadRequest(new { message = "Statut invalide." });
 

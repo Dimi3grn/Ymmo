@@ -21,6 +21,7 @@ public class TransactionsController : ApiControllerBase
     {
         var userId = CurrentUserId;
         var role = CurrentUserRole;
+        var agenceId = CurrentUserAgenceId;
 
         var query = _db.Transactions
             .Include(t => t.Bien)
@@ -31,8 +32,10 @@ public class TransactionsController : ApiControllerBase
 
         query = role switch
         {
-            "Client" => query.Where(t => t.AcheteurId == userId || t.VendeurId == userId),
-            "Agent" or "AdminAgence" => query.Where(t => t.AgentId == userId),
+            // Un agent ne voit que ses transactions ; un admin d'agence voit
+            // toutes les transactions des biens de son agence ; le siège voit tout.
+            "Agent" => query.Where(t => t.AgentId == userId),
+            "AdminAgence" => query.Where(t => t.Bien.AgenceId == agenceId),
             "AdminSiege" => query,
             _ => query.Where(t => t.AcheteurId == userId || t.VendeurId == userId)
         };
@@ -118,6 +121,17 @@ public class TransactionsController : ApiControllerBase
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (transaction is null) return NotFound();
+
+        // Un agent ne gère que ses transactions, un admin d'agence celles de son agence.
+        var autorise = CurrentUserRole switch
+        {
+            "AdminSiege" => true,
+            "AdminAgence" => transaction.Bien.AgenceId == CurrentUserAgenceId,
+            "Agent" => transaction.AgentId == CurrentUserId,
+            _ => false
+        };
+        if (!autorise) return Forbid();
+
         if (!Enum.TryParse<StatutTransaction>(dto.Statut, true, out var statut))
             return BadRequest(new { message = "Statut invalide." });
 
