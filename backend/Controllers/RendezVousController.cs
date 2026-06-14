@@ -21,7 +21,7 @@ public class RendezVousController : ApiControllerBase
     {
         var userId = CurrentUserId;
         var role = CurrentUserRole;
-        var agenceId = CurrentUserAgenceId;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
 
         var query = _db.RendezVous
             .Include(r => r.Bien)
@@ -88,10 +88,12 @@ public class RendezVousController : ApiControllerBase
         if (rdv is null) return NotFound();
 
         // Un agent ne gère que ses visites, un admin d'agence celles de son agence.
-        var autorise = CurrentUserRole switch
+        var role = CurrentUserRole;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
+        var autorise = role switch
         {
             "AdminSiege" => true,
-            "AdminAgence" => rdv.Bien.AgenceId == CurrentUserAgenceId,
+            "AdminAgence" => rdv.Bien.AgenceId == agenceId,
             "Agent" => rdv.AgentId == CurrentUserId,
             _ => false
         };

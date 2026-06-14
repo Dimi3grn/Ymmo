@@ -21,7 +21,7 @@ public class TransactionsController : ApiControllerBase
     {
         var userId = CurrentUserId;
         var role = CurrentUserRole;
-        var agenceId = CurrentUserAgenceId;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
 
         var query = _db.Transactions
             .Include(t => t.Bien)
@@ -130,10 +130,12 @@ public class TransactionsController : ApiControllerBase
         if (transaction is null) return NotFound();
 
         // Un agent ne gère que ses transactions, un admin d'agence celles de son agence.
-        var autorise = CurrentUserRole switch
+        var role = CurrentUserRole;
+        var agenceId = role == "AdminAgence" ? await ResolveCurrentUserAgenceIdAsync(_db) : null;
+        var autorise = role switch
         {
             "AdminSiege" => true,
-            "AdminAgence" => transaction.Bien.AgenceId == CurrentUserAgenceId,
+            "AdminAgence" => transaction.Bien.AgenceId == agenceId,
             "Agent" => transaction.AgentId == CurrentUserId,
             _ => false
         };

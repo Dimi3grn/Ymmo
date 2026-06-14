@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YmmoAPI.Data;
 
 namespace YmmoAPI.Controllers;
 
@@ -18,7 +20,24 @@ public abstract class ApiControllerBase : ControllerBase
     protected string CurrentUserRole =>
         User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
-    /// <summary>Agence de rattachement de l'utilisateur, ou null (cas d'un Client).</summary>
+    /// <summary>Agence de rattachement issue du claim JWT, ou null si absent.</summary>
     protected int? CurrentUserAgenceId =>
         int.TryParse(User.FindFirstValue("agenceId"), out var id) ? id : null;
+
+    /// <summary>
+    /// Résout l'agence de l'utilisateur en privilégiant le claim JWT, avec repli
+    /// sur la base si le claim est absent (cas d'un token émis avant l'ajout du
+    /// claim agenceId). Évite de confondre « claim manquant » et « aucune agence »,
+    /// ce qui priverait un AdminAgence d'accès jusqu'à expiration de son token.
+    /// </summary>
+    protected async Task<int?> ResolveCurrentUserAgenceIdAsync(YmmoDbContext db)
+    {
+        if (CurrentUserAgenceId is int fromClaim)
+            return fromClaim;
+
+        return await db.Utilisateurs
+            .Where(u => u.Id == CurrentUserId)
+            .Select(u => u.AgenceId)
+            .FirstOrDefaultAsync();
+    }
 }
