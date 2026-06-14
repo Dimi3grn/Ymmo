@@ -51,6 +51,13 @@ public class TransactionsController : ApiControllerBase
         var bien = await _db.Biens.FindAsync(dto.BienId);
         if (bien is null) return NotFound(new { message = "Bien introuvable." });
 
+        // Vérifie les parties avant insertion pour éviter une violation de clé
+        // étrangère (qui se traduirait sinon par une 500 non gérée).
+        if (!await _db.Utilisateurs.AnyAsync(u => u.Id == dto.AcheteurId))
+            return BadRequest(new { message = "Acheteur introuvable." });
+        if (!await _db.Utilisateurs.AnyAsync(u => u.Id == dto.VendeurId))
+            return BadRequest(new { message = "Vendeur introuvable." });
+
         var transaction = new Transaction
         {
             BienId = dto.BienId,
