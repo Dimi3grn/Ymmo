@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api/client";
+import { getApiErrorMessage } from "../../api/error";
 import type { RendezVous } from "../../api/types";
 
 const STATUT_STYLES: Record<string, string> = {
@@ -19,8 +20,12 @@ export default function AgentRdvPage() {
   useEffect(fetchRdvs, []);
 
   const updateStatut = async (id: number, statut: string) => {
-    await api.patch(`/rendezvous/${id}/statut`, { statut });
-    fetchRdvs();
+    try {
+      await api.patch(`/rendezvous/${id}/statut`, { statut });
+      fetchRdvs();
+    } catch (err) {
+      alert(getApiErrorMessage(err, "Impossible de mettre à jour le rendez-vous."));
+    }
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", {

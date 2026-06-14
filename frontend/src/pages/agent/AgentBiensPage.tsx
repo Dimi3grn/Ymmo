@@ -55,7 +55,7 @@ export default function AgentBiensPage() {
               <div key={b.id} className="border border-[#D9D4CC] p-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <p className="font-body text-sm text-[#0D0D0D] line-clamp-2 flex-1">{b.titre}</p>
-                  <Link to={`/agent/biens/${b.id}/modifier`} className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors shrink-0">
+                  <Link to={`/agent/biens/${b.id}/modifier`} aria-label={`Modifier ${b.titre}`} title="Modifier" className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors shrink-0">
                     <Pencil className="h-4 w-4" />
                   </Link>
                 </div>
@@ -93,7 +93,7 @@ export default function AgentBiensPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <Link to={`/agent/biens/${b.id}/modifier`} className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors">
+                      <Link to={`/agent/biens/${b.id}/modifier`} aria-label={`Modifier ${b.titre}`} title="Modifier" className="text-[#6B6560] hover:text-[#0D0D0D] transition-colors">
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </td>

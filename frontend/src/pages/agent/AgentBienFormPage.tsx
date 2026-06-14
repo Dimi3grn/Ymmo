@@ -1,10 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api/client";
+import { getApiErrorMessage } from "../../api/error";
 import type { Agence } from "../../api/types";
 
 const TYPES = ["Appartement", "Maison", "Terrain", "Local", "Bureau"];
 const DPE = ["A", "B", "C", "D", "E", "F", "G"];
+
+// Défini au niveau module : recréer ce composant à chaque rendu remonterait les
+// champs et ferait perdre le focus à chaque frappe. Le <label> englobe le champ
+// pour une association accessible implicite.
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="font-body text-[10px] tracking-[0.15em] uppercase text-[#6B6560] block mb-2">{label}</span>
+      {children}
+    </label>
+  );
+}
 
 export default function AgentBienFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,9 +35,17 @@ export default function AgentBienFormPage() {
   });
 
   useEffect(() => {
-    api.get("/agences").then((r) => setAgences(r.data));
-    if (isEdit) {
-      api.get(`/biens/${id}`).then((r) => {
+    let active = true;
+    const load = async () => {
+      // On charge les agences AVANT le bien pour pré-sélectionner la bonne
+      // agence (l'ancien code lisait l'état `agences` encore vide).
+      const agencesRes = await api.get("/agences");
+      if (!active) return;
+      const agencesData: Agence[] = agencesRes.data;
+      setAgences(agencesData);
+      if (isEdit) {
+        const r = await api.get(`/biens/${id}`);
+        if (!active) return;
         const b = r.data;
         setForm({
           titre: b.titre, description: b.description ?? "", type: b.type,
@@ -34,10 +55,13 @@ export default function AgentBienFormPage() {
           anneeConstruction: b.anneeConstruction?.toString() ?? "",
           dpe: b.dpe ?? "", ascenseur: b.ascenseur, parking: b.parking,
           balcon: b.balcon, jardin: b.jardin, piscine: b.piscine,
-          agenceId: agences.find((a) => a.nom === b.agenceNom)?.id?.toString() ?? "1",
+          agenceId: agencesData.find((a) => a.nom === b.agenceNom)?.id?.toString() ?? "1",
         });
-      });
-    }
+      }
+    };
+    load().catch((err) => setError(getApiErrorMessage(err, "Impossible de charger le formulaire.")));
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const set = (key: string, val: string | boolean) => setForm((f) => ({ ...f, [key]: val }));
@@ -57,17 +81,10 @@ export default function AgentBienFormPage() {
       if (isEdit) await api.put(`/biens/${id}`, body);
       else await api.post("/biens", body);
       navigate("/agent/biens");
-    } catch (err: any) {
-      setError(err.response?.data?.message ?? "Erreur lors de l'enregistrement.");
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Erreur lors de l'enregistrement."));
     } finally { setLoading(false); }
   };
-
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div>
-      <label className="font-body text-[10px] tracking-[0.15em] uppercase text-[#6B6560] block mb-2">{label}</label>
-      {children}
-    </div>
-  );
 
   return (
     <div>

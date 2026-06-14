@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
+import { getApiErrorMessage } from "../api/error";
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
@@ -31,8 +32,8 @@ export default function LoginPage() {
       const role = res.data.utilisateur.role;
       if (["Agent", "AdminAgence", "AdminSiege"].includes(role)) navigate("/agent");
       else navigate("/mon-espace");
-    } catch (err: any) {
-      setError(err.response?.data?.message ?? "Une erreur est survenue.");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }

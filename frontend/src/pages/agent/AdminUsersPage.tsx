@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Shield, UserCheck, Building2 } from "lucide-react";
+import { Shield, Building2 } from "lucide-react";
 import api from "../../api/client";
+import { getApiErrorMessage } from "../../api/error";
 import type { Agence } from "../../api/types";
 
 interface UserRow {
@@ -64,7 +65,7 @@ export default function AdminUsersPage() {
   const saveRole = async (userId: number) => {
     setSaving(true);
     try {
-      const body: any = { role: editRole };
+      const body: { role: string; agenceId?: number } = { role: editRole };
       if (editRole === "Agent" || editRole === "AdminAgence") {
         body.agenceId = editAgenceId;
       }
@@ -77,8 +78,8 @@ export default function AdminUsersPage() {
         )
       );
       setEditingId(null);
-    } catch (err: any) {
-      alert(err.response?.data?.message ?? "Erreur");
+    } catch (err) {
+      alert(getApiErrorMessage(err, "Erreur lors de la mise à jour du rôle."));
     } finally {
       setSaving(false);
     }

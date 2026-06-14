@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/client";
+import { getApiErrorMessage } from "../../api/error";
 import type { RendezVous, Transaction } from "../../api/types";
 
 const formatDate = (d: string) =>
@@ -43,7 +44,7 @@ export default function ClientEspacePage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const submitOffer = async (rdvId: number, bienPrix?: number) => {
+  const submitOffer = async (rdvId: number) => {
     setOfferError("");
     setOfferLoading(true);
     try {
@@ -56,8 +57,8 @@ export default function ClientEspacePage() {
       setOfferRdvId(null);
       setOfferMontant("");
       fetchData();
-    } catch (err: any) {
-      setOfferError(err.response?.data?.message ?? "Erreur lors de l'envoi.");
+    } catch (err) {
+      setOfferError(getApiErrorMessage(err, "Erreur lors de l'envoi."));
     } finally {
       setOfferLoading(false);
     }
